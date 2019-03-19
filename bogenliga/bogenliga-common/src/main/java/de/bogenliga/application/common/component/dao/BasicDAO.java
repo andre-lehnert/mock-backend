@@ -3,17 +3,21 @@ package de.bogenliga.application.common.component.dao;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.dbutils.QueryRunner;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import de.bogenliga.application.common.component.entity.BusinessEntity;
+import de.bogenliga.application.common.component.entity.CommonBusinessEntity;
 import de.bogenliga.application.common.database.SQL;
 import de.bogenliga.application.common.database.tx.TransactionManager;
 import de.bogenliga.application.common.errorhandling.ErrorCode;
 import de.bogenliga.application.common.errorhandling.exception.BusinessException;
 import de.bogenliga.application.common.errorhandling.exception.TechnicalException;
+import de.bogenliga.application.common.time.DateProvider;
 
 
 /**
@@ -25,32 +29,83 @@ import de.bogenliga.application.common.errorhandling.exception.TechnicalExceptio
 @Repository
 public class BasicDAO implements DataAccessObject {
 
-    private QueryRunner run = new QueryRunner();
+    private static final String DEFAULT_BE_CREATED_AT = "createdAtUtc";
+    private static final String DEFAULT_BE_CREATED_BY = "createdByUserId";
+    private static final String DEFAULT_BE_MODIFIED_AT = "lastModifiedAtUtc";
+    private static final String DEFAULT_BE_MODIFIED_BY = "lastModifiedByUserId";
+    private static final String DEFAULT_BE_VERSION = "version";
+    private static final String DEFAULT_TABLE_CREATED_AT = "created_at_utc";
+    private static final String DEFAULT_TABLE_CREATED_BY = "created_by";
+    private static final String DEFAULT_TABLE_MODIFIED_AT = "last_modified_at_utc";
+    private static final String DEFAULT_TABLE_MODIFIED_BY = "last_modified_by";
+    private static final String DEFAULT_TABLE_VERSION = "version";
     private final TransactionManager transactionManager;
-
+    private QueryRunner run = new QueryRunner();
 
     @Autowired
     public BasicDAO(final TransactionManager transactionManager) {
         this.transactionManager = transactionManager;
     }
 
-
     /**
      * Package-protected constructor with all dependencies
      */
     BasicDAO(final TransactionManager transactionManager, final QueryRunner queryRunner) {
         this.transactionManager = transactionManager;
-        this.run = queryRunner;
+        run = queryRunner;
     }
 
 
     /**
-     * Provide database connection
+     * I return a map with the table column to business entity parameter mapping.
+     * <p>
+     * The common business entities have these columns.
      *
-     * @return {@link Connection}
+     * @return map with the table column to business entity parameter mapping
+     *
+     * @see CommonBusinessEntity
      */
-    private Connection getConnection() {
-        return transactionManager.getConnection();
+    public static Map<String, String> getTechnicalColumnsToFieldsMap() {
+        final Map<String, String> columnsToFieldsMap = new HashMap<>();
+
+        columnsToFieldsMap.put(DEFAULT_TABLE_CREATED_AT, DEFAULT_BE_CREATED_AT);
+        columnsToFieldsMap.put(DEFAULT_TABLE_CREATED_BY, DEFAULT_BE_CREATED_BY);
+        columnsToFieldsMap.put(DEFAULT_TABLE_MODIFIED_AT, DEFAULT_BE_MODIFIED_AT);
+        columnsToFieldsMap.put(DEFAULT_TABLE_MODIFIED_BY, DEFAULT_BE_MODIFIED_BY);
+        columnsToFieldsMap.put(DEFAULT_TABLE_VERSION, DEFAULT_BE_VERSION);
+        return columnsToFieldsMap;
+    }
+
+
+    /**
+     * I set the creation parameter for the user and the timestamp.
+     *
+     * @param businessEntity with common technical paramater
+     * @param currentUserId  current user
+     *
+     * @see CommonBusinessEntity
+     */
+    public <T extends CommonBusinessEntity> void setCreationAttributes(final T businessEntity,
+                                                                       final long currentUserId) {
+        businessEntity.setCreatedByUserId(currentUserId);
+        businessEntity.setCreatedAtUtc(DateProvider.currentTimestampUtc());
+    }
+
+
+
+
+    /**
+     * I set the modification parameter for the user and the timestamp.
+     *
+     * @param businessEntity with common technical paramater
+     * @param currentUserId  current user
+     *
+     * @see CommonBusinessEntity
+     */
+    public <T extends CommonBusinessEntity> void setModificationAttributes(final T businessEntity,
+                                                                           final long currentUserId) {
+        businessEntity.setLastModifiedByUserId(currentUserId);
+        businessEntity.setLastModifiedAtUtc(DateProvider.currentTimestampUtc());
     }
 
 
@@ -183,6 +238,42 @@ public class BasicDAO implements DataAccessObject {
 
 
     /**
+     * I update a single {@link CommonBusinessEntity} object
+     * in the database.
+     *
+     * I validate the version of the given object and detect concurrent modification conflicts.
+     *
+     * I encapsulate the UPDATE and SELECT query into a transaction.
+     *
+     * @param businessEntityConfiguration The {@code businessEntityConfiguration} is used to process the
+     *                                    "object-relational" mapping between the business entity and the database table
+     * @param updateBusinessEntity        business entity with a version field to persist
+     *                                    the UPDATE sql query is automatically generated
+     * @param fieldSelector               to identify the target table row in the WHERE clause
+     * @return instance of the updated business entity
+     * @throws BusinessException if no or more than 1 row is affected by the update
+     */
+    public <T extends CommonBusinessEntity> T updateVersionedEntity(final BusinessEntityConfiguration<T>
+                                                                               businessEntityConfiguration,
+                                                                    final T updateBusinessEntity,
+                                                                    final String fieldSelector) {
+        // check concurrent modification
+        final SQL.SQLWithParameter selectSql = SQL.selectSQL(updateBusinessEntity,
+                businessEntityConfiguration.getTable(), fieldSelector,
+                businessEntityConfiguration.getColumnToFieldMapping());
+
+        final T objectBeforeUpdate = selectSingleEntity(businessEntityConfiguration, selectSql.getSql(),
+                selectSql.getParameter());
+
+        if (objectBeforeUpdate.getVersion() != updateBusinessEntity.getVersion()) {
+            throw new BusinessException(ErrorCode.ENTITY_CONFLICT_ERROR, "The business entity was modified by an other user.");
+        } // else: do update
+
+        return updateEntity(businessEntityConfiguration, updateBusinessEntity, fieldSelector);
+    }
+
+
+    /**
      * I update a single {@link BusinessEntity} object
      * in the database.
      *
@@ -193,12 +284,11 @@ public class BasicDAO implements DataAccessObject {
      * @param updateBusinessEntity        business entity to persist
      *                                    the UPDATE sql query is automatically generated
      * @param fieldSelector               to identify the target table row in the WHERE clause
-     * @param singleSelectSql             to select the modified business entity after the update
      * @return instance of the updated business entity
      * @throws BusinessException if no or more than 1 row is affected by the update
      */
     public <T> T updateEntity(final BusinessEntityConfiguration<T> businessEntityConfiguration,
-                              final T updateBusinessEntity, final String fieldSelector, final String singleSelectSql) {
+                              final T updateBusinessEntity, final String fieldSelector) {
         final SQL.SQLWithParameter sql = SQL.updateSQL(updateBusinessEntity, businessEntityConfiguration.getTable(),
                 fieldSelector,
                 businessEntityConfiguration.getColumnToFieldMapping());
@@ -212,12 +302,15 @@ public class BasicDAO implements DataAccessObject {
                     logSQL(businessEntityConfiguration.getLogger(), sql.getSql(), sql.getParameter()),
                     sql.getParameter());
 
-            // last parameter := identifier for the update query
-            final Object fieldSelectorValue = sql.getParameter()[sql.getParameter().length - 1];
+
+            final SQL.SQLWithParameter selectSql = SQL.selectSQL(updateBusinessEntity,
+                    businessEntityConfiguration.getTable(), fieldSelector,
+                    businessEntityConfiguration.getColumnToFieldMapping());
 
             if (affectedRows == 1) {
-                businessEntityAfterUpdate = selectSingleEntity(businessEntityConfiguration, singleSelectSql,
-                        fieldSelectorValue);
+
+                businessEntityAfterUpdate = selectSingleEntity(businessEntityConfiguration, selectSql.getSql(),
+                        selectSql.getParameter());
 
                 transactionManager.commit();
 
@@ -226,16 +319,16 @@ public class BasicDAO implements DataAccessObject {
 
                 throw new BusinessException(ErrorCode.INVALID_ARGUMENT_ERROR,
                         String.format("Update of business entity '%s' does not affect any row",
-                                updateBusinessEntity.toString()), fieldSelectorValue);
+                                updateBusinessEntity.toString()), selectSql.getParameter()[0]);
             } else {
                 transactionManager.rollback();
 
                 throw new BusinessException(ErrorCode.INVALID_ARGUMENT_ERROR,
                         String.format("Update of business entity '%s' affected %d rows",
-                                updateBusinessEntity.toString(), affectedRows), fieldSelectorValue);
+                                updateBusinessEntity.toString(), affectedRows), selectSql.getParameter()[0]);
             }
 
-        } catch (final SQLException | TechnicalException e) {
+        } catch (final SQLException | TechnicalException | IndexOutOfBoundsException e) {
             transactionManager.rollback();
             throw new TechnicalException(ErrorCode.DATABASE_ERROR, e);
         } finally {
@@ -285,6 +378,16 @@ public class BasicDAO implements DataAccessObject {
         } finally {
             transactionManager.release();
         }
+    }
+
+
+    /**
+     * Provide database connection
+     *
+     * @return {@link Connection}
+     */
+    private Connection getConnection() {
+        return transactionManager.getConnection();
     }
 
 

@@ -1,22 +1,16 @@
-[![Build Status](https://travis-ci.org/andre-lehnert/mock-backend.svg?branch=master)](https://travis-ci.org/andre-lehnert/mock-backend)
-[![sonarcloud](https://sonarcloud.io/api/project_badges/measure?project=online.bogenliga%3Abogenliga&metric=alert_status)](https://sonarcloud.io/dashboard?id=online.bogenliga%3Abogenliga)
-[![sonarcloud_cov](https://sonarcloud.io/api/project_badges/measure?project=online.bogenliga%3Abogenliga&metric=coverage)](https://sonarcloud.io/dashboard?id=online.bogenliga%3Abogenliga)
+[![Build Status](https://travis-ci.org/exxcellent/swt2-bsa-backend.svg?branch=master)](https://travis-ci.org/exxcellent/swt2-bsa-backend)
+[![sonarcloud](https://sonarcloud.io/api/project_badges/measure?project=de.bogenliga.application&metric=alert_status)](https://sonarcloud.io/dashboard?id=de.bogenliga.application)
+[![sonarcloud_cov](https://sonarcloud.io/api/project_badges/measure?project=de.bogenliga.application&metric=coverage)](https://sonarcloud.io/dashboard?id=de.bogenliga.application)
 
 
-# Bogenliga Online Application
+# Bogenliga Application
 
-This repository can be used for a basic working Spring Boot application
 
 ## Content
 
 - Spring Boot with REST services
 - Flyway
 
-__tbd__
-
-## Requirements
-
-__tbd__
 
 ## How to use
 
@@ -28,9 +22,14 @@ Use ```mvnw``` instead of ```mvn``` commands.
    - run: ```mvn clean install```
 2. Run database migration
     - go to the bogenliga-db-migration directory: ```cd bogenliga-db-migration```
-    - run: ```mvn flyway:migrate```
+    - run: ```mvn clean flyway:clean flyway:migrate -PLOCAL``` 
 3. Run Spring Boot
     - go to the bogenliga-application directory: ```cd bogenliga-application```
     - run: ```mvn spring-boot:run```
 
+   
+## References
 
+- https://flywaydb.org/documentation/migrations
+- https://flywaydb.org/documentation/maven/
+- https://flywaydb.org/documentation/command/migrate
