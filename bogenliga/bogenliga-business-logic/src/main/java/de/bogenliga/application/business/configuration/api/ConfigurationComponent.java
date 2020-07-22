@@ -1,7 +1,7 @@
 package de.bogenliga.application.business.configuration.api;
 
 import java.util.List;
-import de.bogenliga.application.business.configuration.api.types.ConfigurationVO;
+import de.bogenliga.application.business.configuration.api.types.ConfigurationDO;
 import de.bogenliga.application.common.component.ComponentFacade;
 
 /**
@@ -16,9 +16,9 @@ public interface ConfigurationComponent extends ComponentFacade {
      * I return all configuration entries.
      *
      * @return list of all configuration entries in the database;
-     * empty list, if not configuration is found
+     * empty list, if no configuration is found
      */
-    List<ConfigurationVO> findAll();
+    List<ConfigurationDO> findAll();
 
 
     /**
@@ -28,31 +28,34 @@ public interface ConfigurationComponent extends ComponentFacade {
      * @return single configuration entry with the given key;
      * null, if no configuration is found
      */
-    ConfigurationVO findByKey(String key);
+    ConfigurationDO findByKey(String key);
 
 
     /**
      * I persist a new configuration in the database.
      *
-     * @param configurationVO new configuration
+     * @param configurationDO new configuration
+     * @param userId current user
      * @return persisted version of the configuration
      */
-    ConfigurationVO create(ConfigurationVO configurationVO);
+    ConfigurationDO create(ConfigurationDO configurationDO, long userId);
 
 
     /**
      * I update an existing configuration. The configuration is identified by the key.
      *
-     * @param configurationVO to update an existing configuration value
+     * @param configurationDO to update an existing configuration value
+     * @param userId current user
      * @return persisted version of the configuration
      */
-    ConfigurationVO update(ConfigurationVO configurationVO);
+    ConfigurationDO update(ConfigurationDO configurationDO, long userId);
 
 
     /**
      * I delete an existing configuration. The configuration is identified by the key.
      *
-     * @param configurationVO to delete an existing configuration key-value-pair
+     * @param configurationDO to delete an existing configuration key-value-pair
+     * @param userId current user
      */
-    void delete(ConfigurationVO configurationVO);
+    void delete(ConfigurationDO configurationDO, long userId);
 }
