@@ -1,7 +1,3 @@
-//======================================================================================================================
-// Module: BMW Remote Software Update (RSU) - Zentrales Fahrzeug Update System (ZFUS)
-// Copyright (c) 2018 BMW Group. All rights reserved.
-//======================================================================================================================
 package de.bogenliga.application.services.common.errorhandling;
 
 import de.bogenliga.application.common.errorhandling.ErrorCode;
@@ -24,7 +20,7 @@ public class ErrorDTO {
      * @param param        optional parameter to describe the error cause
      * @param errorMessage optional errorMessage of the exception (can be removed in a later version of the project)
      */
-    ErrorDTO(final ErrorCode errorCode, final String[] param, final String errorMessage) {
+    public ErrorDTO(final ErrorCode errorCode, final String[] param, final String errorMessage) {
         this.errorCode = errorCode;
         this.param = param;
         this.errorMessage = errorMessage;
@@ -37,9 +33,9 @@ public class ErrorDTO {
      * @param errorCode    to identify the specific error and translate the error on the user interface
      * @param errorMessage optional errorMessage of the exception (can be removed in a later version of the project)
      */
-    ErrorDTO(final ErrorCode errorCode, final String errorMessage) {
+    public ErrorDTO(final ErrorCode errorCode, final String errorMessage) {
         this.errorCode = errorCode;
-        this.param = new String[0];
+        param = new String[0];
         this.errorMessage = errorMessage;
     }
 
@@ -49,10 +45,10 @@ public class ErrorDTO {
      *
      * @param errorCode to identify the specific error and translate the error on the user interface
      */
-    ErrorDTO(final ErrorCode errorCode) {
+    public ErrorDTO(final ErrorCode errorCode) {
         this.errorCode = errorCode;
-        this.param = new String[0];
-        this.errorMessage = null;
+        param = new String[0];
+        errorMessage = null;
     }
 
 
