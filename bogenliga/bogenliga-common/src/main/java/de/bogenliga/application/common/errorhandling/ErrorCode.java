@@ -1,7 +1,3 @@
-//======================================================================================================================
-// Module: BMW Remote Software Update (RSU) - Zentrales Fahrzeug Update System (ZFUS)
-// Copyright (c) 2018 BMW Group. All rights reserved.
-//======================================================================================================================
 package de.bogenliga.application.common.errorhandling;
 
 /**
@@ -37,6 +33,12 @@ public enum ErrorCode {
     // user management
     NO_SESSION_ERROR(ErrorCategory.BUSINESS, "NO_SESSION_ERROR"),
     NO_PERMISSION_ERROR(ErrorCategory.BUSINESS, "NO_PERMISSION_ERROR"),
+    INVALID_SIGN_IN_CREDENTIALS(ErrorCategory.BUSINESS, "INVALID_SIGN_IN_CREDENTIALS"),
+    PRECONDITION_MSG_RESET_PW_EQUAL_IDS(ErrorCategory.BUSINESS, "PRECONDITION_MSG_USER_PW_RESET_FAIL"),
+    TOO_MANY_INCORRECT_LOGIN_ATTEMPTS(ErrorCategory.BUSINESS, "TOO_MANY_INCORRECT_LOGIN_ATTEMPTS"),
+    INSUFFICIENT_CREDENTIALS(ErrorCategory.BUSINESS, "INSUFFICIENT_CREDENTIALS"),
+    DUBLICATE_USERNAME(ErrorCategory.BUSINESS, "DUBLICATE_USERNAME"),
+
 
     UNDEFINED(ErrorCategory.UNDEFINED, "UNDEFINED");
 
