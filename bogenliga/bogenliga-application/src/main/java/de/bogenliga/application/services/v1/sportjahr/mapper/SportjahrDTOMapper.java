@@ -5,7 +5,7 @@ import de.bogenliga.application.services.v1.sportjahr.SportjahrDTO;
 import java.util.function.*;
 
 /**
- * TODO [AL] class documentation
+ * Erstellt ein SportjahrDTO Objekt
  *
  * @author Philipp Schmidt
  */
