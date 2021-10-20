@@ -1,22 +1,16 @@
-[![Build Status](https://travis-ci.org/andre-lehnert/mock-backend.svg?branch=master)](https://travis-ci.org/andre-lehnert/mock-backend)
-[![sonarcloud](https://sonarcloud.io/api/project_badges/measure?project=online.bogenliga%3Abogenliga&metric=alert_status)](https://sonarcloud.io/dashboard?id=online.bogenliga%3Abogenliga)
-[![sonarcloud_cov](https://sonarcloud.io/api/project_badges/measure?project=online.bogenliga%3Abogenliga&metric=coverage)](https://sonarcloud.io/dashboard?id=online.bogenliga%3Abogenliga)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=exxcellent_swt2-bsa-backend&metric=alert_status)](https://sonarcloud.io/dashboard?id=exxcellent_swt2-bsa-backend)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=exxcellent_swt2-bsa-backend&metric=coverage)](https://sonarcloud.io/dashboard?id=exxcellent_swt2-bsa-backend)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=exxcellent_swt2-bsa-backend&metric=code_smells)](https://sonarcloud.io/dashboard?id=exxcellent_swt2-bsa-backend)
 
 
-# Bogenliga Online Application
+# Bogenliga Application
 
-This repository can be used for a basic working Spring Boot application
 
 ## Content
 
 - Spring Boot with REST services
 - Flyway
 
-__tbd__
-
-## Requirements
-
-__tbd__
 
 ## How to use
 
@@ -28,9 +22,16 @@ Use ```mvnw``` instead of ```mvn``` commands.
    - run: ```mvn clean install```
 2. Run database migration
     - go to the bogenliga-db-migration directory: ```cd bogenliga-db-migration```
-    - run: ```mvn flyway:migrate```
+    - run: ```mvn clean flyway:clean flyway:migrate -PLOCAL``` 
 3. Run Spring Boot
     - go to the bogenliga-application directory: ```cd bogenliga-application```
     - run: ```mvn spring-boot:run```
+4. Open Swagger API documentation
+    - http://localhost:9000/swagger-ui.html
+   
+## References
 
-
+- https://flywaydb.org/documentation/migrations
+- https://flywaydb.org/documentation/maven/
+- https://flywaydb.org/documentation/command/migrate
+-
