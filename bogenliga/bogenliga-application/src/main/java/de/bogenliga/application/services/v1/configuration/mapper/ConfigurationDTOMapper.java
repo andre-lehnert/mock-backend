@@ -1,12 +1,12 @@
 package de.bogenliga.application.services.v1.configuration.mapper;
 
 import java.util.function.Function;
-import de.bogenliga.application.business.configuration.api.types.ConfigurationVO;
+import de.bogenliga.application.business.configuration.api.types.ConfigurationDO;
 import de.bogenliga.application.common.service.mapping.DataTransferObjectMapper;
 import de.bogenliga.application.services.v1.configuration.model.ConfigurationDTO;
 
 /**
- * I map the {@link ConfigurationVO} and {@link ConfigurationDTO} objects
+ * I map the {@link ConfigurationDO} and {@link ConfigurationDTO} objects
  *
  * @author Andre Lehnert, eXXcellent solutions consulting & software gmbh
  * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/function/package-summary.html">
@@ -24,22 +24,26 @@ public final class ConfigurationDTOMapper implements DataTransferObjectMapper {
 
 
     /**
-     * I map the {@link ConfigurationVO} object to the {@link ConfigurationDTO} object
+     * I map the {@link ConfigurationDO} object to the {@link ConfigurationDTO} object
      */
-    public static final Function<ConfigurationVO, ConfigurationDTO> toDTO = vo -> {
+    public static final Function<ConfigurationDO, ConfigurationDTO> toDTO = vo -> {
+        final Long id = vo.getId();
         final String key = vo.getKey();
         final String value = vo.getValue();
+        final String regex = vo.getRegex();
 
-        return new ConfigurationDTO(key, value);
+        return new ConfigurationDTO(id, key, value, regex);
     };
 
     /**
-     * I map the {@link ConfigurationDTO} object to the {@link ConfigurationVO} object
+     * I map the {@link ConfigurationDTO} object to the {@link ConfigurationDO} object
      */
-    public static final Function<ConfigurationDTO, ConfigurationVO> toVO = dto -> {
+    public static final Function<ConfigurationDTO, ConfigurationDO> toDO = dto -> {
+        final Long id = dto.getId();
         final String key = dto.getKey();
         final String value = dto.getValue();
+        final String regex = dto.getRegex();
 
-        return new ConfigurationVO(key, value);
+        return new ConfigurationDO(id, key, value, regex);
     };
 }
