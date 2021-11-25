@@ -1,11 +1,9 @@
-//======================================================================================================================
-// Module: BMW Remote Software Update (RSU) - Zentrales Fahrzeug Update System (ZFUS)
-// Copyright (c) 2018 BMW Group. All rights reserved.
-//======================================================================================================================
 package de.bogenliga.application.services.common.errorhandling;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,32 +20,26 @@ import de.bogenliga.application.common.errorhandling.exception.BusinessException
 import de.bogenliga.application.common.errorhandling.exception.TechnicalException;
 
 /**
- * @author Andre Lehnert, eXXcellent solutions consulting & software gmbh
+ * I handle all application exceptions globally and generate an error response with a suitable http status code and an
+ * error message
+ *
+ * @author Andre Lehnert, eXXcellent solutions consulting & software gmbh 
  */
 @ControllerAdvice
 @RestController
 public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex,
-                                                                  final HttpHeaders headers, final HttpStatus status,
-                                                                  final WebRequest request) {
-        final List<ErrorDTO> errors = new ArrayList<>();
-        for (final FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.add(new ErrorDTO(ErrorCode.INVALID_ARGUMENT_ERROR,
-                    error.getField() + " = " + error.getRejectedValue() + " -> " + error.getField()
-                            + " " + error.getDefaultMessage()));
-        }
-        for (final ObjectError error : ex.getBindingResult().getGlobalErrors()) {
-            errors.add(new ErrorDTO(ErrorCode.INVALID_ARGUMENT_ERROR,
-                    error.getObjectName() + ": " + error.getDefaultMessage()));
-        }
-
-        return handleExceptionInternal(
-                ex, errors, headers, HttpStatus.BAD_REQUEST, request);
-    }
+    private static final Logger LOG = LoggerFactory.getLogger(CustomizedResponseEntityExceptionHandler.class);
 
 
+    /**
+     * Handles all {@link BusinessException}
+     *
+     * @param ex      {@link BusinessException}
+     * @param request will be ignored
+     *
+     * @return response with error
+     */
     @ExceptionHandler(BusinessException.class)
     public final ResponseEntity<ErrorDTO> handleBusinessException(final BusinessException ex,
                                                                   final WebRequest request) {
@@ -63,6 +55,7 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
                 errorStatus = HttpStatus.BAD_REQUEST;
                 break;
             case NO_SESSION_ERROR:
+                LOG.debug("BuisnessException: " + "NO_SESSION_ERROR");
                 errorStatus = HttpStatus.UNAUTHORIZED;
                 break;
             case NO_PERMISSION_ERROR:
@@ -77,9 +70,19 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
     }
 
 
+    /**
+     * Handles all {@link TechnicalException}
+     *
+     * @param ex      {@link TechnicalException}
+     * @param request will be ignored
+     *
+     * @return response with error
+     */
     @ExceptionHandler(TechnicalException.class)
     public final ResponseEntity<ErrorDTO> handleTechnicalException(final TechnicalException ex,
                                                                    final WebRequest request) {
+        LOG.error("A TechnicalException occured.", ex);
+
         final HttpStatus errorStatus;
         switch (ex.getErrorCode()) {
             case DEPRECATED_VERSION_ERROR:
@@ -90,6 +93,9 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
             case UNEXPECTED_ERROR:
             case DATABASE_CONNECTION_ERROR:
             case DATABASE_TRANSACTION_ERROR:
+            case NO_SESSION_ERROR:
+                errorStatus = HttpStatus.UNAUTHORIZED;
+                break;
             case DATABASE_ERROR:
             default:
                 errorStatus = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -100,18 +106,65 @@ public class CustomizedResponseEntityExceptionHandler extends ResponseEntityExce
     }
 
 
+    /**
+     * Handles all {@link NullPointerException}
+     *
+     * @param ex      {@link NullPointerException}
+     * @param request will be ignored
+     *
+     * @return response with error
+     */
     @ExceptionHandler(NullPointerException.class)
     public final ResponseEntity<ErrorDTO> handleNullPointerException(final NullPointerException ex,
                                                                      final WebRequest request) {
+        LOG.error("A NullPointerException occured.", ex);
+
         final ErrorDTO errorDetails = new ErrorDTO(ErrorCode.UNEXPECTED_ERROR, ex.getMessage());
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
 
+    /**
+     * Handles all {@link RuntimeException}
+     *
+     * @param ex      {@link RuntimeException}
+     * @param request will be ignored
+     *
+     * @return response with error
+     */
     @ExceptionHandler(RuntimeException.class)
     public final ResponseEntity<ErrorDTO> handleRuntimeException(final RuntimeException ex,
                                                                  final WebRequest request) {
+        LOG.error("A RuntimeException occured.", ex);
+
         final ErrorDTO errorDetails = new ErrorDTO(ErrorCode.UNEXPECTED_ERROR, ex.getMessage());
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+    /**
+     * Handles invalid REST requests
+     *
+     * @return response with error
+     */
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(final MethodArgumentNotValidException ex,
+                                                                  final HttpHeaders headers, final HttpStatus status,
+                                                                  final WebRequest request) {
+        LOG.error("A MethodArgumentNotValidException occured.", ex);
+
+        final List<ErrorDTO> errors = new ArrayList<>();
+        for (final FieldError error : ex.getBindingResult().getFieldErrors()) {
+            errors.add(new ErrorDTO(ErrorCode.INVALID_ARGUMENT_ERROR,
+                    error.getField() + " = " + error.getRejectedValue() + " -> " + error.getField()
+                            + " " + error.getDefaultMessage()));
+        }
+        for (final ObjectError error : ex.getBindingResult().getGlobalErrors()) {
+            errors.add(new ErrorDTO(ErrorCode.INVALID_ARGUMENT_ERROR,
+                    error.getObjectName() + ": " + error.getDefaultMessage()));
+        }
+
+        return handleExceptionInternal(
+                ex, errors, headers, HttpStatus.BAD_REQUEST, request);
     }
 }

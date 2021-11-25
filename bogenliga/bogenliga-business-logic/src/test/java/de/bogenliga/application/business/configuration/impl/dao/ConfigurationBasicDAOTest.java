@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import de.bogenliga.application.business.configuration.api.types.ConfigurationDO;
 import de.bogenliga.application.business.configuration.impl.entity.ConfigurationBE;
 import de.bogenliga.application.common.component.dao.BasicDAO;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,6 +30,7 @@ public class ConfigurationBasicDAOTest {
 
     private static final String KEY = "key";
     private static final String VALUE = "value";
+
 
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -131,7 +133,7 @@ public class ConfigurationBasicDAOTest {
         input.setConfigurationValue(VALUE);
 
         // configure mocks
-        when(basicDao.updateEntity(any(), any(), any(), any())).thenReturn(input);
+        when(basicDao.updateEntity(any(), any(), any())).thenReturn(input);
 
         // call test method
         final ConfigurationBE actual = underTest.update(input);
@@ -145,7 +147,7 @@ public class ConfigurationBasicDAOTest {
                 .isEqualTo(input.getConfigurationValue());
 
         // verify invocations
-        verify(basicDao).updateEntity(any(), eq(input), any(), any());
+        verify(basicDao).updateEntity(any(), eq(input), any());
     }
 
 
@@ -165,5 +167,22 @@ public class ConfigurationBasicDAOTest {
 
         // verify invocations
         verify(basicDao).deleteEntity(any(), eq(input), any());
+    }
+
+    @Test
+    public void findById() {
+        // prepare test data
+        long id = 1223;
+
+        ConfigurationBE expected = new ConfigurationBE();
+
+        // configure mocks
+        when(basicDao.selectSingleEntity(any(), any(), eq(id))).thenReturn(expected);
+
+        // call test method
+        ConfigurationBE result = underTest.findById(id);
+
+        // assert result
+        assertThat(result).isEqualTo(expected);
     }
 }
